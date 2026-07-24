@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Diagram render intermediates (mmdc -> rsvg-convert -> inkscape)
+# Committed output is diagrams/*.svg only
+*.mmd
+*.pdf
+raw.svg
+tmp.*
+
+# Editor / OS cruft
+*.swp
+*~
+.vscode/
+.idea/
+CLAUDE.md
