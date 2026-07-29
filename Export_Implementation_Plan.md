@@ -49,7 +49,9 @@
 
 ## Task 1: Reconcile the spec and README against live data
 
-The spec's worked examples are stale. `ground_truth/receipts.yml` CASE001 is now **Ravensdale Health Store** (ABN `79 104 332 181`, total `13.60`, date `02/03/2023`, layout `receipt_fuel`), not the Bunnings / `34.16` / `receipt_thermal_80mm` values quoted in spec §4.2 and §5.3. Spec §6.1 and §6.3 are labelled "verbatim" but quote the same stale vintage. Everything downstream is tested against these examples, so they are fixed first.
+The spec's worked examples are stale. `ground_truth/receipts.yml` CASE001 is now **Ravensdale Health Store** (ABN `79 104 332 181`, total `13.60`, date `07/07/2024`, layout `receipt_fuel`), not the Bunnings / `34.16` / `receipt_thermal_80mm` values quoted in spec §4.2 and §5.3. Spec §6.1 and §6.3 are labelled "verbatim" but quote the same stale vintage. Everything downstream is tested against these examples, so they are fixed first.
+
+**Partially applied 30 July 2026.** Spec §4.2, §5.3, §6.1 and §6.2 now carry live values (date `07/07/2024`, and in §6.1 the live `bank_description`, `match_difficulty: medium` and full `notes` string). **Still outstanding in this task:** §6.3's trust-quad anchor key and `linking_fields` (Step 4, last paragraph), §1, §11, and the `README.md` corrections. Re-read the live YAML before doing those — do not trust the values quoted in this plan without checking.
 
 `output/` and `derived/` may also predate the re-seed, which would make images, derived files and ground truth three different vintages. This task establishes one vintage.
 
@@ -140,7 +142,7 @@ In `GroundTruth_Export_Spec.md` §4.2, replace the entire example — not only t
     "supplier_name": "Ravensdale Health Store",
     "business_abn": "79 104 332 181",
     "business_address": "400 Stewart Rd, South Yarra VIC 3141",
-    "invoice_date": "02/03/2023"
+    "invoice_date": "07/07/2024"
   }
 }
 ```
@@ -155,14 +157,14 @@ In §6.1, replace the quoted link entry with the live first entry:
 CASE001_receipt_fuel.png:
 - bank_statement: CASE001_cba_standard.png
   supplier: Ravensdale Health Store
-  receipt_date: 02/03/2023
+  receipt_date: 07/07/2024
   receipt_total: '13.60'
-  bank_date: 02/03/2023
-  bank_description: VISA DEBIT PURCHASE RAVENSDALE HEALTH STORE Alexandria AU
+  bank_date: 07/07/2024
+  bank_description: VISA DEBIT PURCHASE SQ *RAVENSDALE Alexandria AU
   bank_amount: '13.60'
   match_status: FOUND
-  match_difficulty: easy
-  notes: "Early row on cba standard — exact date and amount match"
+  match_difficulty: medium
+  notes: "Early row on cba standard — exact date and amount, abbreviated merchant reference"
 ```
 
 Update the §6.2 emitted-form JSON to match. In §6.3, replace the quad anchor key `CASE201_distribution_statement_standard.png` with the live `CASE201_dist_table_plain.png` and its live `linking_fields` (`trust_abn: 79 104 332 181`, `beneficiary_tfn: 890 838 614`, `share_of_net_income: '73078.48'`, `franking_credit: '20985.50'`, `capital_gain_component: '6026.13'`), and update the §6.3 JSON accordingly.
@@ -797,7 +799,7 @@ CASE001_RECEIPT = {
     "SUPPLIER_NAME": "Ravensdale Health Store",
     "BUSINESS_ABN": "79 104 332 181",
     "BUSINESS_ADDRESS": "400 Stewart Rd, South Yarra VIC 3141",
-    "INVOICE_DATE": "02/03/2023",
+    "INVOICE_DATE": "07/07/2024",
     "IS_GST_INCLUDED": "true",
     "GST_AMOUNT": "1.24",
     "TOTAL_AMOUNT": "13.60",
@@ -818,7 +820,7 @@ EXPECTED = {
         "supplier_name": "Ravensdale Health Store",
         "business_abn": "79 104 332 181",
         "business_address": "400 Stewart Rd, South Yarra VIC 3141",
-        "invoice_date": "02/03/2023",
+        "invoice_date": "07/07/2024",
     },
 }
 
@@ -1311,13 +1313,13 @@ TRANSACTION_FIXTURE = {
         {
             "bank_statement": "CASE001_cba_standard.png",
             "supplier": "Ravensdale Health Store",
-            "receipt_date": "02/03/2023",
+            "receipt_date": "07/07/2024",
             "receipt_total": "13.60",
-            "bank_date": "02/03/2023",
-            "bank_description": "VISA DEBIT PURCHASE RAVENSDALE HEALTH STORE Alexandria AU",
+            "bank_date": "07/07/2024",
+            "bank_description": "VISA DEBIT PURCHASE SQ *RAVENSDALE Alexandria AU",
             "bank_amount": "13.60",
             "match_status": "FOUND",
-            "match_difficulty": "easy",
+            "match_difficulty": "medium",
             "notes": "Early row on cba standard",
         }
     ]
@@ -1352,18 +1354,16 @@ def test_transaction_link_maps_to_doc_refs() -> None:
             "target_doc": "CASE001_cba_standard.png",
             "match_keys": {
                 "supplier": "Ravensdale Health Store",
-                "date": "02/03/2023",
+                "date": "07/07/2024",
                 "amount": "13.60",
             },
             "target_evidence": {
-                "date": "02/03/2023",
-                "description": (
-                    "VISA DEBIT PURCHASE RAVENSDALE HEALTH STORE Alexandria AU"
-                ),
+                "date": "07/07/2024",
+                "description": "VISA DEBIT PURCHASE SQ *RAVENSDALE Alexandria AU",
                 "amount": "13.60",
             },
             "label": "FOUND",
-            "difficulty": "easy",
+            "difficulty": "medium",
             "notes": "Early row on cba standard",
         }
     ]
@@ -1381,7 +1381,7 @@ def test_one_source_with_several_targets_yields_several_records() -> None:
     }
     records = transaction_links_to_doc_refs(fixture, "spaced")
     assert len(records) == 2
-    assert {r["difficulty"] for r in records} == {"easy", "hard"}
+    assert {r["difficulty"] for r in records} == {"medium", "hard"}
 
 
 def test_quad_maps_to_three_doc_refs() -> None:
@@ -1973,7 +1973,7 @@ FIELDS = {
     "DOCUMENT_TYPE": "RECEIPT",
     "SUPPLIER_NAME": "Ravensdale Health Store",
     "BUSINESS_ABN": "79 104 332 181",
-    "INVOICE_DATE": "02/03/2023",
+    "INVOICE_DATE": "07/07/2024",
     "IS_GST_INCLUDED": "true",
     "GST_AMOUNT": "1.24",
     "TOTAL_AMOUNT": "13.60",
@@ -2486,6 +2486,8 @@ def test_ragged_transaction_lists_are_rejected() -> None:
 ```
 
 `TRANSACTION_AMOUNTS_PAID: "13.60|"` is deliberate: a debit row has no credit and vice versa, so empty members are legitimate and must survive the zip rather than being filtered out.
+
+The `BANK` fixture is an **invented statement, not CASE001** — supplier `CBA`, payer `J Smith`, and a March 2023 statement period. Its `02/03/2023` and `05/03/2023` transaction dates are internally consistent with `STATEMENT_DATE_RANGE: 01/03/2023 - 31/03/2023` and must stay inside that window. Do not sweep these dates to CASE001's `07/07/2024`: it would place transactions outside their own statement period and make the fixture incoherent.
 
 - [ ] **Step 2: Run the tests to verify they fail**
 

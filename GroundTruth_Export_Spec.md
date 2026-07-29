@@ -138,7 +138,7 @@ CORD's Donut-style `gt_parse` is a nested value tree. The pipe-delimited line-it
 
 ### 4.2 Worked example (CASE001, receipt)
 
-Known CASE001 values: supplier Ravensdale Health Store, ABN `79 104 332 181`, total `13.60`, date `02/03/2023`, layout `receipt_fuel`. Line items and GST below are the real values from the live `ground_truth/receipts.yml`: `4.73 + 8.87 = 13.60`, and `13.60 / 11 = 1.236…` rounds to the stored `1.24`.
+Every value below is the live one from `ground_truth/receipts.yml` (re-verified 30 July 2026): supplier Ravensdale Health Store, ABN `79 104 332 181`, total `13.60`, date `07/07/2024`, layout `receipt_fuel`. The arithmetic checks out — `4.73 + 8.87 = 13.60`, and `13.60 / 11 = 1.236…` rounds to the stored `1.24`.
 
 ```json
 {
@@ -152,7 +152,7 @@ Known CASE001 values: supplier Ravensdale Health Store, ABN `79 104 332 181`, to
     "supplier_name": "Ravensdale Health Store",
     "business_abn": "79 104 332 181",
     "business_address": "400 Stewart Rd, South Yarra VIC 3141",
-    "invoice_date": "02/03/2023"
+    "invoice_date": "07/07/2024"
   }
 }
 ```
@@ -177,13 +177,20 @@ DocILE fields are `{page, bbox: [left, top, right, bottom] (relative 0..1), fiel
 | `BUSINESS_ADDRESS` | `vendor_address` | |
 | `BUSINESS_ABN` | `vendor_registration_id` | Confirmed, not `vendor_tax_id` — see §5.4 |
 | `INVOICE_DATE` | `date_issue` | |
-| `PAYMENT_DUE_DATE` | `date_due` | |
 | `GST_AMOUNT` | `amount_total_tax` | |
 | `TOTAL_AMOUNT` | `amount_total_gross` if `IS_GST_INCLUDED` else `amount_total_net` | boolean selects the field |
 | `PAYER_NAME` | `customer_billing_name` | |
 | `PAYER_ADDRESS` | `customer_billing_address` | |
 
 All strings above confirmed byte-exact against the DocILE field-type enumeration — see §5.4.
+
+**Held in reserve: `date_due`.** DocILE has a `date_due` fieldtype, but **no receipt or invoice source
+column populates it.** `PAYMENT_DUE_DATE` exists only in the `cc_statement` field subset
+(`config/field_definitions.yml`, verified 30 July 2026), and there is no DocILE mapping for
+credit-card statements — they have no public-schema home (see §7). Should the invoice subset ever
+gain a due date (the schema change discussed in `Invoice_vs_Receipt.md` §5), the binding is
+`PAYMENT_DUE_DATE → date_due`. It is recorded here rather than as a table row so the mapping table
+contains only reachable rows.
 
 ### 5.2 LIR (line-item) field mapping
 
@@ -209,7 +216,7 @@ All strings above confirmed byte-exact against the DocILE field-type enumeration
      "bbox": [0.08, 0.04, 0.62, 0.09]},
     {"page": 0, "fieldtype": "vendor_registration_id", "text": "79 104 332 181",
      "bbox": [0.08, 0.10, 0.55, 0.14]},
-    {"page": 0, "fieldtype": "date_issue", "text": "02/03/2023",
+    {"page": 0, "fieldtype": "date_issue", "text": "07/07/2024",
      "bbox": [0.70, 0.10, 0.95, 0.14]},
     {"page": 0, "fieldtype": "amount_total_gross", "text": "13.60",
      "bbox": [0.72, 0.86, 0.95, 0.90]},
@@ -263,15 +270,17 @@ No `fieldtype` string in §5.1 or §5.2 remains unconfirmed.
 CASE001_receipt_fuel.png:
 - bank_statement: CASE001_cba_standard.png
   supplier: Ravensdale Health Store
-  receipt_date: 02/03/2023
+  receipt_date: 07/07/2024
   receipt_total: '13.60'
-  bank_date: 02/03/2023
-  bank_description: VISA DEBIT PURCHASE RAVENSDALE HEALTH STORE Alexandria AU
+  bank_date: 07/07/2024
+  bank_description: VISA DEBIT PURCHASE SQ *RAVENSDALE Alexandria AU
   bank_amount: '13.60'
   match_status: FOUND
-  match_difficulty: easy
-  notes: "Early row on cba standard — exact date and amount match"
+  match_difficulty: medium
+  notes: "Early row on cba standard — exact date and amount, abbreviated merchant reference"
 ```
+
+Re-verified byte-for-byte against the live file 30 July 2026. (The `notes` value is stored with an escaped `—` and a wrapped continuation line in the YAML; the em dash above is that same character rendered.)
 
 The parent YAML key is the source document; the value is a list (one receipt may link to several bank rows). Match evidence is `supplier + date + amount + description` (there is no numeric transaction id).
 
@@ -294,12 +303,12 @@ Emitted form:
   "link_type": "receipt_to_bank",
   "source_doc": "CASE001_receipt_fuel.png",
   "target_doc": "CASE001_cba_standard.png",
-  "match_keys": {"supplier": "Ravensdale Health Store", "date": "02/03/2023", "amount": "13.60"},
-  "target_evidence": {"date": "02/03/2023",
-    "description": "VISA DEBIT PURCHASE RAVENSDALE HEALTH STORE Alexandria AU", "amount": "13.60"},
+  "match_keys": {"supplier": "Ravensdale Health Store", "date": "07/07/2024", "amount": "13.60"},
+  "target_evidence": {"date": "07/07/2024",
+    "description": "VISA DEBIT PURCHASE SQ *RAVENSDALE Alexandria AU", "amount": "13.60"},
   "label": "FOUND",
-  "difficulty": "easy",
-  "notes": "Early row on cba standard, exact date and amount match"
+  "difficulty": "medium",
+  "notes": "Early row on cba standard — exact date and amount, abbreviated merchant reference"
 }
 ```
 
